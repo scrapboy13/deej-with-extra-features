@@ -1,26 +1,50 @@
-const int NUM_SLIDERS = 6;
-const int analogInputs[NUM_SLIDERS] = {A0, A1, A2, A3, A4, A5};
+const int NUM_SLIDERS = 3;
+const int analogInputs[NUM_SLIDERS] = {A0, A1, A2};
+//                  add a 1023, if you have more than 3 or delete some if you have less this is the only thing you haft to change for it to work other than the normal stuff
+int aMAX[NUM_SLIDERS] = {1023,1023,1023};
+int aMIN[NUM_SLIDERS] = {0};
 
 int analogSliderValues[NUM_SLIDERS];
 
+long myMap(long x, long in_min, long in_max, long out_min, long out_max) {
+  int val = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  if(val < 0) return 0;
+  if(val > 1023) return 1023;
+  return val;
+}
 void setup() { 
   for (int i = 0; i < NUM_SLIDERS; i++) {
     pinMode(analogInputs[i], INPUT);
   }
-
+  pinMode(8,INPUT_PULLUP);
   Serial.begin(9600);
 }
 
 void loop() {
   updateSliderValues();
   sendSliderValues(); // Actually send data (all the time)
-  // printSliderValues(); // For debug
+  //printSliderValues(); // For debug
   delay(10);
+  if(digitalRead(8) == LOW){
+    for (int i = 0; i < NUM_SLIDERS; i++) {
+      aMAX[i] = analogRead(analogInputs[i]);
+    }
+    delay(10);
+    while(digitalRead(8) == LOW);
+    delay(10);
+    while(digitalRead(8) == HIGH);
+    for (int i = 0; i < NUM_SLIDERS; i++) {
+      aMIN[i] = analogRead(analogInputs[i]);
+    }
+    delay(10);
+    while(digitalRead(8) == LOW);
+    delay(10);
+  }
 }
 
 void updateSliderValues() {
   for (int i = 0; i < NUM_SLIDERS; i++) {
-     analogSliderValues[i] = analogRead(analogInputs[i]);
+    analogSliderValues[i] = (int)myMap(analogRead(analogInputs[i]),aMIN[i],aMAX[i],0,1023);
   }
 }
 
